@@ -6,11 +6,20 @@ from dagster_tutorial.defs.partitions import monthly_partition
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-def get_partition_range(partition_key, period='monthly'):
+def get_partition_range(partition_key, period):
     """Helper function to return the start and end date strings for a given partition key."""
     if partition_key:
         start_date = datetime.strptime(partition_key, constants.DATE_FORMAT).replace(day=1)
-        end_date = start_date + relativedelta(months=1)
+
+        if period == 'monthly':
+            end_date = start_date + relativedelta(months=1)
+        elif period == 'weekly':
+            end_date = start_date + relativedelta(weeks=1)
+        elif period == 'daily':
+            end_date = start_date + relativedelta(days=1)
+        else:
+            raise ValueError(f"Invalid period: {period}")
+        
         start_date_str = start_date.strftime(constants.DATE_FORMAT)
         end_date_str = end_date.strftime(constants.DATE_FORMAT)
     else:
@@ -20,7 +29,7 @@ def get_partition_range(partition_key, period='monthly'):
 
 def get_customer_key_range(sql_server_source, partition_key=None):
     """Retrieves the minimum, maximum, and count of CustomerKey from the CustomerStaging table."""
-    start_date_str, end_date_str = get_partition_range(partition_key)
+    start_date_str, end_date_str = get_partition_range(partition_key, 'monthly')
 
     with sql_server_source() as conn:
         with conn.cursor() as cursor:
@@ -42,7 +51,7 @@ def fetch_data(conn, query):
 
 def process_customer_batch(sql_server_source, sql_server_target, partition_key, batch_start, batch_end):
     """Processes a batch of customer records, performing Type 1 SCD merge (inserts, updates, and deletes)."""
-    start_date_str, end_date_str = get_partition_range(partition_key)
+    start_date_str, end_date_str = get_partition_range(partition_key, 'monthly')
     inserts, updates, deletes, ignores, records = 0, 0, 0, 0, 0
 
     source_query = f"""
