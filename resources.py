@@ -31,6 +31,7 @@ def sql_server_target(context: dg.AssetExecutionContext):
 
     def get_connection():
         """Returns a pyodbc connection to the SQL Server database."""
+        #return sqlalchemy.create_engine(f"mssql+pyodbc://{user}:{password}@{server}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server", fast_executemany=True)
         return pyodbc.connect(f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={user};PWD={password}")
     return get_connection
 
