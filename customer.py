@@ -1,8 +1,9 @@
 import dagster as dg
 import polars as pl
 import time
-from dagster_tutorial.defs.assets import constants
-from dagster_tutorial.defs.partitions import monthly_partition
+from . import constants
+from ..partitions import monthly_partition
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
