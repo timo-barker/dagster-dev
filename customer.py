@@ -162,7 +162,7 @@ def process_customer_batch(sql_server_source, sql_server_target, partition_key, 
     return inserts, updates, deletes, ignores, records
 
 @dg.asset(
-    description="dbo.Customer",
+    description="Staging asset for dbo.Customer",
     required_resource_keys={"sql_server_source", "sql_server_target"},
     partitions_def=monthly_partition,
     group_name="MyDatabase",
