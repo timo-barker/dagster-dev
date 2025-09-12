@@ -6,22 +6,22 @@ from dateutil.relativedelta import relativedelta
 from . import constants
 from ..partitions import monthly_partition
 
-def get_partition_range(partition_key, period='monthly'):
+def get_partition_range(partition_key, period="monthly"):
     """Helper function to return the start and end date strings for a given partition key."""
     if partition_key:
         start_date = datetime.strptime(partition_key, constants.DATE_FORMAT).replace(day=1)
-        if period == 'monthly':
+        if period == "monthly":
             end_date = start_date + relativedelta(months=1)
-        elif period == 'weekly':
+        elif period == "weekly":
             end_date = start_date + relativedelta(weeks=1)
-        elif period == 'daily':
+        elif period == "daily":
             end_date = start_date + relativedelta(days=1)
         else:
             raise ValueError(f"Invalid period: {period}")
         start_date_str = start_date.strftime(constants.DATE_FORMAT)
         end_date_str = end_date.strftime(constants.DATE_FORMAT)
     else:
-        start_date_str, end_date_str = '', ''
+        start_date_str, end_date_str = "", ""
 
     return start_date_str, end_date_str
 
@@ -30,7 +30,7 @@ def fetch_data(conn, query):
     return pl.read_database(query, connection=conn)
 
 def all_to_str(df: pl.DataFrame) -> pl.DataFrame:
-    """Helper function to convert all columns in a Polars DataFrame to string type."""
+    """Helper function to convert numeric columns in a Polars DataFrame to string type."""
     cols = []
     for c in df.columns:
         if df[c].dtype in [pl.Int8, pl.Int16, pl.Int32, pl.Int64, pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64, pl.Float32, pl.Float64]:
@@ -52,8 +52,7 @@ def customer(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     partition_key = context.partition_key
     sql_server_source = context.resources.sql_server_source
     sql_server_target = context.resources.sql_server_target
-
-    start_date_str, end_date_str = get_partition_range(partition_key, 'monthly')
+    start_date_str, end_date_str = get_partition_range(partition_key, "monthly")
 
     source_query = f"""
         SELECT CustomerID, PersonID, StoreID, TerritoryID, AccountNumber, rowguid, ModifiedDate
