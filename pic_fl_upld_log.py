@@ -30,7 +30,7 @@ def pic_fl_upld_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         """Executes SQL query and returns results as Polars DataFrame."""
         return pl.read_database(query, connection=conn)
 
-    def _get_pic_fl_upld_log_key_range(
+    def _get_batch_key_ranges(
         sql_server_source, batch_size: int, partition_key: str | None = None
     ) -> pl.DataFrame:
         """Gets IDENT ranges from source table divided into batches."""
@@ -341,10 +341,10 @@ def pic_fl_upld_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     # Step 1: get batch interval key ranges from source and target
     with ThreadPoolExecutor(max_workers=2) as pool:
         src_future = pool.submit(
-            _get_pic_fl_upld_log_key_range, sql_server_source, batch_size, None
+            _get_batch_key_ranges, sql_server_source, batch_size, None
         )
         tgt_future = pool.submit(
-            _get_pic_fl_upld_log_key_range, sql_server_target, batch_size, None
+            _get_batch_key_ranges, sql_server_target, batch_size, None
         )
         src_ranges, tgt_ranges = src_future.result(), tgt_future.result()
 
@@ -377,7 +377,7 @@ def pic_fl_upld_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         batch_deletes = _delete_batch_data(delete_ids) if delete_ids else 0
         batch_ignores = len(ignore_ids)
 
-        # Step 8: print status to console and update accumulators
+        # Step 8: echo status to console and update accumulators
         context.log.info(
             f"Batch {batch['row_nbr']+1:,} of {max_batch}: "
             f"IDENT {batch_min_key:} to {batch_max_key:} => "
@@ -393,12 +393,12 @@ def pic_fl_upld_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
 
     # Step 9: report overall status
     end_time = time.time()
-    min_key = int(merged_ranges.select("min_key").min().item())
-    max_key = int(merged_ranges.select("max_key").max().item())
+    batch_count = merged_ranges.height
+    min_key = int(merged_ranges.select("min_key").min().item()) if batch_count > 0 else 0
+    max_key = int(merged_ranges.select("max_key").max().item()) if batch_count > 0 else 0
     seconds = round(end_time - start_time, 3)
     row_count = inserts + updates + deletes + ignores
     records_per_second = int(round(row_count / seconds if seconds > 0 else 0, 0))
-    batch_count = merged_ranges.height
 
     return dg.MaterializeResult(
         metadata={
