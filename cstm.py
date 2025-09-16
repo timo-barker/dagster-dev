@@ -9,18 +9,20 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from .. import constants
+from ..partitions import daily_partition
 
 
 @dg.asset(
     required_resource_keys={"sql_server_source", "sql_server_target"},
-    deps=["pic_fl_upld_log"],
-    name="pic_fl_upld_data",
-    description="irb.PIC_FL_UPLD_DATA",
-    kinds={"sqlserver", "source"},
-    group_name="wps_pic",
+    deps=["prfl"],
+    partitions_def=daily_partition,
+    name="cstm",
+    description="irb.CSTM",
+    kinds={"sql", "table"},
+    group_name="wps_clnt_grt",
 )
-def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
-    """SCD Type 1 merge between source and target PIC_FL_UPLD_DATA tables."""
+def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
+    """Upserts records between source and target CSTM tables."""
 
     def __get_partition_range(partition_key: str | None = None) -> tuple[str, str]:
         """Converts partition key into date range strings."""
@@ -39,20 +41,20 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     def _get_batch_key_ranges(
         sql_server_source, batch_size: int, partition_key: str | None = None
     ) -> pl.DataFrame:
-        """Gets IDENT ranges from source table divided into batches."""
+        """Gets CSTM_KEY ranges from source table divided into batches."""
         start_date_str, end_date_str = __get_partition_range(partition_key)
         range_query = f"""
-            WITH _ (IDENT, ROW_NBR) AS (
-                SELECT IDENT
-                      ,ROW_NUMBER() OVER(ORDER BY IDENT)
-                FROM irb.PIC_FL_UPLD_DATA
+            WITH _ (CSTM_KEY, ROW_NBR) AS (
+                SELECT CSTM_KEY
+                      ,ROW_NUMBER() OVER(ORDER BY CSTM_KEY)
+                FROM irb.CSTM
                 WHERE (    UPDATED_DTTM >= '{start_date_str}'
                        AND UPDATED_DTTM <  '{end_date_str}')
                    OR NULLIF('{start_date_str}','') IS NULL
             )
             SELECT ((ROW_NBR-1)/{batch_size}) AS row_nbr
-                  ,MIN(IDENT) AS min_key
-                  ,MAX(IDENT) AS max_key
+                  ,MIN(CSTM_KEY) AS min_key
+                  ,MAX(CSTM_KEY) AS max_key
             FROM _
             GROUP BY ((ROW_NBR-1)/{batch_size})
             """
@@ -144,18 +146,23 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         return extended
 
     def _select_batch_data(sql_server, min_key: int, max_key: int) -> pl.DataFrame:
-        """Fetch data from PIC_FL_UPLD_DATA for a given IDENT range [min_key, max_key]."""
+        """Fetch data from CSTM for a given CSTM_KEY range [min_key, max_key]."""
         query = f"""
-            SELECT IDENT
-                  ,UPLD_ID
-                  ,FLD_NM
-                  ,FLD_VL
+            SELECT CSTM_KEY
+                  ,PRFL_KEY
+                  ,RPT_STRT_DT
+                  ,RPT_END_DT
+                  ,SUBGRP
+                  ,ONS_NABP
+                  ,SRX_LIST
+                  ,CSTM_STTS
+                  ,CSTM_NOTE
                   ,CREATED_BY
                   ,CREATED_DTTM
                   ,UPDATED_BY
                   ,UPDATED_DTTM
-            FROM irb.PIC_FL_UPLD_DATA
-            WHERE IDENT BETWEEN {min_key} AND {max_key}
+            FROM irb.CSTM
+            WHERE CSTM_KEY BETWEEN {min_key} AND {max_key}
             """
         with sql_server() as conn:
             data_df = __fetch_data(conn, query)
@@ -177,24 +184,29 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         source_df: pl.DataFrame, target_df: pl.DataFrame
     ) -> tuple[list, list, list, list]:
         """Categorize records into insert, update, delete and ignore bins"""
-        source_ids = set(source_df["IDENT"].to_list())
-        target_ids = set(target_df["IDENT"].to_list())
+        source_ids = set(source_df["CSTM_KEY"].to_list())
+        target_ids = set(target_df["CSTM_KEY"].to_list())
         insert_ids = list(source_ids - target_ids)
         potential_update_ids = list(source_ids & target_ids)
         delete_ids = list(target_ids - source_ids)
 
         if potential_update_ids:
             update_source_df = source_df.filter(
-                pl.col("IDENT").is_in(potential_update_ids)
+                pl.col("CSTM_KEY").is_in(potential_update_ids)
             )
             update_target_df = target_df.filter(
-                pl.col("IDENT").is_in(potential_update_ids)
+                pl.col("CSTM_KEY").is_in(potential_update_ids)
             )
 
             diff_condition = (
-                __values_differ("UPLD_ID", "UPLD_ID_target")
-                | __values_differ("FLD_NM", "FLD_NM_target")
-                | __values_differ("FLD_VL", "FLD_VL_target")
+                __values_differ("PRFL_KEY", "PRFL_KEY_target")
+                | __values_differ("RPT_STRT_DT", "RPT_STRT_DT_target")
+                | __values_differ("RPT_END_DT", "RPT_END_DT_target")
+                | __values_differ("SUBGRP", "SUBGRP_target")
+                | __values_differ("ONS_NABP", "ONS_NABP_target")
+                | __values_differ("SRX_LIST", "SRX_LIST_target")
+                | __values_differ("CSTM_STTS", "CSTM_STTS_target")
+                | __values_differ("CSTM_NOTE", "CSTM_NOTE_target")
                 | __values_differ("CREATED_BY", "CREATED_BY_target")
                 | __values_differ("CREATED_DTTM", "CREATED_DTTM_target")
                 | __values_differ("UPDATED_BY", "UPDATED_BY_target")
@@ -202,10 +214,10 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
             )
 
             diff_df = update_source_df.join(
-                update_target_df, on="IDENT", how="left", suffix="_target"
+                update_target_df, on="CSTM_KEY", how="left", suffix="_target"
             ).filter(diff_condition)
 
-            update_ids = diff_df["IDENT"].to_list()
+            update_ids = diff_df["CSTM_KEY"].to_list()
             ignore_ids = list(set(potential_update_ids) - set(update_ids))
         else:
             update_ids = []
@@ -238,7 +250,7 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
 
     def _insert_batch_data(source_df: pl.DataFrame, insert_ids: list) -> int:
         """Insert new records into the target table."""
-        insert_data_df = source_df.filter(pl.col("IDENT").is_in(insert_ids))
+        insert_data_df = source_df.filter(pl.col("CSTM_KEY").is_in(insert_ids))
         insert_data_pl = _num_to_str(insert_data_df)
         insert_data_np = insert_data_pl.to_numpy()
         insert_data_ls = insert_data_np.tolist()
@@ -246,28 +258,39 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         with sql_server_target() as conn_target:
             with conn_target.cursor() as cursor_target:
                 cursor_target.execute(
-                    "ALTER TABLE irb.PIC_FL_UPLD_DATA DISABLE TRIGGER ALL"
-                )
+                    "ALTER TABLE irb.CSTM DISABLE TRIGGER ALL"
+                )                
+                cursor_target.execute(
+                    "SET IDENTITY_INSERT irb.CSTM ON"
+                )                
                 cursor_target.fast_executemany = True
                 cursor_target.executemany(
                     """
-                    INSERT INTO irb.PIC_FL_UPLD_DATA 
+                    INSERT INTO irb.CSTM 
                       (
-                        IDENT
-                       ,UPLD_ID
-                       ,FLD_NM
-                       ,FLD_VL
+                        CSTM_KEY
+                       ,PRFL_KEY
+                       ,RPT_STRT_DT
+                       ,RPT_END_DT
+                       ,SUBGRP
+                       ,ONS_NABP
+                       ,SRX_LIST
+                       ,CSTM_STTS
+                       ,CSTM_NOTE
                        ,CREATED_BY
                        ,CREATED_DTTM
                        ,UPDATED_BY
                        ,UPDATED_DTTM
                       )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     insert_data_ls,
                 )
                 cursor_target.execute(
-                    "ALTER TABLE irb.PIC_FL_UPLD_DATA ENABLE TRIGGER ALL"
+                    "SET IDENTITY_INSERT irb.CSTM OFF"
+                )                
+                cursor_target.execute(
+                    "ALTER TABLE irb.CSTM ENABLE TRIGGER ALL"
                 )
                 conn_target.commit()
 
@@ -275,17 +298,22 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
 
     def _update_batch_data(source_df: pl.DataFrame, update_ids: list) -> int:
         """Update existing records in the target table."""
-        update_data = source_df.filter(pl.col("IDENT").is_in(update_ids))
+        update_data = source_df.filter(pl.col("CSTM_KEY").is_in(update_ids))
         update_data_df = update_data.select(
             [
-                pl.col("UPLD_ID"),
-                pl.col("FLD_NM"),
-                pl.col("FLD_VL"),
+                pl.col("PRFL_KEY"),
+                pl.col("RPT_STRT_DT"),
+                pl.col("RPT_END_DT"),
+                pl.col("SUBGRP"),
+                pl.col("ONS_NABP"),
+                pl.col("SRX_LIST"),
+                pl.col("CSTM_STTS"),
+                pl.col("CSTM_NOTE"),
                 pl.col("CREATED_BY"),
                 pl.col("CREATED_DTTM"),
                 pl.col("UPDATED_BY"),
                 pl.col("UPDATED_DTTM"),
-                pl.col("IDENT"),
+                pl.col("CSTM_KEY"),
             ]
         )
         update_data_pl = _num_to_str(update_data_df)
@@ -295,50 +323,33 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         with sql_server_target() as conn_target:
             with conn_target.cursor() as cursor_target:
                 cursor_target.execute(
-                    "ALTER TABLE irb.PIC_FL_UPLD_DATA DISABLE TRIGGER ALL"
+                    "ALTER TABLE irb.CSTM DISABLE TRIGGER ALL"
                 )
                 cursor_target.executemany(
                     """
-                    UPDATE irb.PIC_FL_UPLD_DATA
-                    SET UPLD_ID = ?
-                       ,FLD_NM = ?
-                       ,FLD_VL = ?
+                    UPDATE irb.CSTM
+                    SET PRFL_KEY = ?
+                       ,RPT_STRT_DT = ?
+                       ,RPT_END_DT = ?
+                       ,SUBGRP = ?
+                       ,ONS_NABP = ?
+                       ,SRX_LIST = ?
+                       ,CSTM_STTS = ?
+                       ,CSTM_NOTE = ?
                        ,CREATED_BY = ?
                        ,CREATED_DTTM = ?
                        ,UPDATED_BY = ?
                        ,UPDATED_DTTM = ?
-                    WHERE IDENT = ?
+                    WHERE CSTM_KEY = ?
                     """,
                     update_data_ls,
                 )
                 cursor_target.execute(
-                    "ALTER TABLE irb.PIC_FL_UPLD_DATA ENABLE TRIGGER ALL"
+                    "ALTER TABLE irb.CSTM ENABLE TRIGGER ALL"
                 )
                 conn_target.commit()
 
         return len(update_ids)
-
-    def _delete_batch_data(delete_ids: list) -> int:
-        """Delete records from the target table."""
-        delete_data_ls = [(id,) for id in delete_ids]
-        with sql_server_target() as conn_target:
-            with conn_target.cursor() as cursor_target:
-                cursor_target.execute(
-                    "ALTER TABLE irb.PIC_FL_UPLD_DATA DISABLE TRIGGER ALL"
-                )
-                cursor_target.executemany(
-                    """
-                    DELETE irb.PIC_FL_UPLD_DATA
-                    WHERE IDENT = ?
-                    """,
-                    delete_data_ls,
-                )
-                cursor_target.execute(
-                    "ALTER TABLE irb.PIC_FL_UPLD_DATA ENABLE TRIGGER ALL"
-                )
-                conn_target.commit()
-
-        return len(delete_ids)
 
     # Step 0: initialize
     start_datetime, start_time = str(datetime.now().astimezone()), time.time()
@@ -382,25 +393,33 @@ def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
             source_df, target_df
         )
 
-        # Steps 5/6/7: perform DML operations
-        batch_inserts = _insert_batch_data(source_df, insert_ids) if insert_ids else 0
-        batch_updates = _update_batch_data(source_df, update_ids) if update_ids else 0
-        batch_deletes = _delete_batch_data(delete_ids) if delete_ids else 0
-        batch_ignores = len(ignore_ids)
+        if len(delete_ids) > 0:
+            context.log.error(
+                f"Batch {batch['row_nbr']+1:,} of {max_batch}: "
+                f"CSTM_KEY {batch_min_key:} to {batch_max_key:} => "
+                f"{len(delete_ids):,} deleted records detected"
+            )
+            raise dg.Failure("Deletes detected in source data; manual intervention required.")
+        else:
+            # Steps 5/6/7: perform DML operations
+            batch_inserts = _insert_batch_data(source_df, insert_ids) if insert_ids else 0
+            batch_updates = _update_batch_data(source_df, update_ids) if update_ids else 0
+            batch_deletes = 0
+            batch_ignores = len(ignore_ids)
 
-        # Step 8: echo status to console and update accumulators
-        context.log.info(
-            f"Batch {batch['row_nbr']+1:,} of {max_batch}: "
-            f"IDENT {batch_min_key:} to {batch_max_key:} => "
-            f"{batch_inserts:,} inserted, "
-            f"{batch_updates:,} updated, "
-            f"{batch_deletes:,} deleted, "
-            f"{batch_ignores:,} unchanged"
-        )
-        inserts += batch_inserts
-        updates += batch_updates
-        deletes += batch_deletes
-        ignores += batch_ignores
+            # Step 8: echo status to console and update accumulators
+            context.log.info(
+                f"Batch {batch['row_nbr']+1:,} of {max_batch}: "
+                f"CSTM_KEY {batch_min_key:} to {batch_max_key:} => "
+                f"{batch_inserts:,} inserted, "
+                f"{batch_updates:,} updated, "
+                f"{batch_deletes:,} deleted, "
+                f"{batch_ignores:,} unchanged"
+            )
+            inserts += batch_inserts
+            updates += batch_updates
+            deletes += batch_deletes
+            ignores += batch_ignores
 
     # Step 9: report overall status
     batch_count = merged_ranges.height

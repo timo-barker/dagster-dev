@@ -3,7 +3,7 @@ import pyodbc
 import os
 
 @dg.resource(
-    description="SQL Server source database connection"
+    description="SQL Server source database connection",
 )
 def sql_server_source(context: dg.AssetExecutionContext):
     """A Dagster resource that provides a SQL Server connection."""
@@ -19,7 +19,7 @@ def sql_server_source(context: dg.AssetExecutionContext):
     return get_connection
 
 @dg.resource(
-    description="SQL Server target database connection"
+    description="SQL Server target database connection",
 )
 def sql_server_target(context: dg.AssetExecutionContext):
     """A Dagster resource that provides a SQL Server connection."""

@@ -1,5 +1,5 @@
 [project]
-name = "dagster_tutorial"
+name = "pic_automation_dev"
 requires-python = ">=3.9,<3.14"
 version = "0.1.0"
 dependencies = [
@@ -28,9 +28,9 @@ force-include = { "pyproject.toml" = "pyproject.toml" }
 directory_type = "project"
 
 [tool.dg.project]
-root_module = "dagster_tutorial"
+root_module = "pic_automation_dev"
 registry_modules = [
-    "dagster_tutorial.components.*",
+    "pic_automation_dev.components.*",
 ]
 
 

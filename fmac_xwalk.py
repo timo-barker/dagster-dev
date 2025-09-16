@@ -1,18 +1,22 @@
 import dagster as dg
+import getpass
 import polars as pl
+import socket
 import time
+import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from pathlib import Path
 from .. import constants
 
 
 @dg.asset(
     required_resource_keys={"sql_server_source", "sql_server_target"},
-    deps=["bot_cust_carr_xwalk"],
+    name="fmac_xwalk",
     description="irb.FMAC_XWALK",
-    kinds={"sqlserver", "table"},
-    group_name="pic_automation",
+    kinds={"sqlserver", "source"},
+    group_name="wps_pic",
 )
 def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """SCD Type 1 merge between source and target FMAC_XWALK tables."""
@@ -429,7 +433,7 @@ def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         return len(delete_ids)
 
     # Step 0: initialize
-    start_time = time.time()
+    start_datetime, start_time = str(datetime.now().astimezone()), time.time()
     sql_server_source = context.resources.sql_server_source
     sql_server_target = context.resources.sql_server_target
     batch_size = int(constants.BATCH_SIZE)
@@ -491,12 +495,14 @@ def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         ignores += batch_ignores
 
     # Step 9: report overall status
-    end_time = time.time()
     batch_count = merged_ranges.height
     min_key = int(merged_ranges.select("min_key").min().item()) if batch_count > 0 else 0
     max_key = int(merged_ranges.select("max_key").max().item()) if batch_count > 0 else 0
-    seconds = round(end_time - start_time, 3)
     row_count = inserts + updates + deletes + ignores
+    user_name, host_name = getpass.getuser(), socket.gethostname()
+    project_version = tomllib.load(Path('pyproject.toml').open('rb'))['project']['version']
+    end_datetime, end_time = str(datetime.now().astimezone()), time.time()
+    seconds = round(end_time - start_time, 3)
     records_per_second = int(round(row_count / seconds if seconds > 0 else 0, 0))
 
     return dg.MaterializeResult(
@@ -510,7 +516,12 @@ def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
             "DELETE": dg.MetadataValue.int(deletes),
             "IGNORE": dg.MetadataValue.int(ignores),
             "ROWCNT": dg.MetadataValue.int(row_count),
-            "SECOND": dg.MetadataValue.float(seconds),
+            "USERNM": dg.MetadataValue.text(user_name),
+            "HOSTNM": dg.MetadataValue.text(host_name),
+            "DGVRSN": dg.MetadataValue.text(project_version),
+            "STRDTM": dg.MetadataValue.text(start_datetime),
+            "ENDDTM": dg.MetadataValue.text(end_datetime),
+            "SECNDS": dg.MetadataValue.float(seconds),
             "RCRD_S": dg.MetadataValue.int(records_per_second),
         }
     )

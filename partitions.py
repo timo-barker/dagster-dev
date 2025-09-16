@@ -1,6 +1,6 @@
 import dagster as dg
 from datetime import datetime
-from .assets import constants
+from . import constants
 
 start_date = datetime.strptime(constants.START_DATE, constants.DATE_FORMAT)
 start_date_str = start_date.strftime(constants.DATE_FORMAT)
