@@ -51,11 +51,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                                     ( CHAR(64)
                                      ,HASHBYTES
                                         ( 'SHA2_256'
-                                         ,CONCAT_WS
-                                            ( '|'
-                                             ,PHRMCY_CARR_ID
-                                             ,CMS_CNTRCT_NBR
-                                             ,CUST_ID ) )
+                                         ,CONCAT
+                                            ( PHRMCY_CARR_ID
+                                             ,'|',CMS_CNTRCT_NBR
+                                             ,'|',CUST_ID ) )
                                      ,2 )
                                   ,1
                                   ,16 )
@@ -176,11 +175,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                                     ( CHAR(64)
                                      ,HASHBYTES
                                         ( 'SHA2_256'
-                                         ,CONCAT_WS
-                                            ( '|'
-                                             ,PHRMCY_CARR_ID
-                                             ,CMS_CNTRCT_NBR
-                                             ,CUST_ID ) )
+                                         ,CONCAT
+                                            ( PHRMCY_CARR_ID
+                                             ,'|',CMS_CNTRCT_NBR
+                                             ,'|',CUST_ID ) )
                                      ,2 )
                                   ,1
                                   ,16 )
@@ -375,11 +373,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                                             ( CHAR(64)
                                              ,HASHBYTES
                                                 ( 'SHA2_256'
-                                                 ,CONCAT_WS
-                                                    ( '|'
-                                                     ,PHRMCY_CARR_ID
-                                                     ,CMS_CNTRCT_NBR
-                                                     ,CUST_ID ) )
+                                                 ,CONCAT
+                                                    ( PHRMCY_CARR_ID
+                                                     ,'|',CMS_CNTRCT_NBR
+                                                     ,'|',CUST_ID ) )
                                              ,2 )
                                           ,1
                                           ,16 )
@@ -426,11 +423,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                                             ( CHAR(64)
                                              ,HASHBYTES
                                                 ( 'SHA2_256'
-                                                 ,CONCAT_WS
-                                                    ( '|'
-                                                     ,PHRMCY_CARR_ID
-                                                     ,CMS_CNTRCT_NBR
-                                                     ,CUST_ID ) )
+                                                 ,CONCAT
+                                                    ( PHRMCY_CARR_ID
+                                                     ,'|',CMS_CNTRCT_NBR
+                                                     ,'|',CUST_ID ) )
                                              ,2 )
                                           ,1
                                           ,16 )
