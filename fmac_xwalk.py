@@ -310,7 +310,8 @@ def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                        ,CRR_ACCT_EXP_DT
                        ,SF_ACT_ID_CODE
                        ,INCM_PER_GTEED
-                       ,SCENARIO, ACTION
+                       ,SCENARIO
+                       ,ACTION
                        ,REASON
                        ,DATE_LOADED
                        ,DATE_MODIFIED
@@ -322,7 +323,7 @@ def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                        ,UPDATED_DTTM
                       )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     insert_data_ls,
                 )
