@@ -37,11 +37,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
         sql_server_source, batch_size: int, partition_key: str | None = None
     ) -> pl.DataFrame:
         """Gets HASH_KEY ranges from source table divided into batches."""
-        hash_expression = constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')
         start_date_str, end_date_str = __get_partition_range(partition_key)
         range_query = f"""
             WITH __ (HASH_KEY) AS (
-                SELECT {hash_expression}
+                SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')}
                 FROM irb.BOT_CUST_CARR_XWALK
                 WHERE (    UPDATED_DTTM >= '{start_date_str}'
                        AND UPDATED_DTTM <  '{end_date_str}')
@@ -147,10 +146,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
     
     def _select_batch_data(sql_server, min_key: int, max_key: int) -> pl.DataFrame:
         """Fetch data from BOT_CUST_CARR_XWALK for a given HASH_KEY range [min_key, max_key]."""
-        hash_expression = constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')
         query = f"""
             WITH _ AS (
-                SELECT {hash_expression} AS HASH_KEY
+                SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')} AS HASH_KEY
                       ,*
                 FROM irb.BOT_CUST_CARR_XWALK
             )
@@ -305,7 +303,6 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
 
     def _update_batch_data(source_df: pl.DataFrame, update_ids: list) -> int:
         """Update existing records in the target table."""
-        hash_expression = constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')
         update_data = source_df.filter(pl.col("HASH_KEY").is_in(update_ids))
         update_data_df = update_data.select(
             [
@@ -333,7 +330,7 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                 cursor_target.executemany(
                     f"""
                     WITH _ AS (
-                        SELECT {hash_expression} AS HASH_KEY
+                        SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')} AS HASH_KEY
                               ,*
                         FROM irb.BOT_CUST_CARR_XWALK
                     )
@@ -360,7 +357,6 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
 
     def _delete_batch_data(delete_ids: list) -> int:
         """Delete records from the target table."""
-        hash_expression = constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')
         delete_data_ls = [(id,) for id in delete_ids]
         with sql_server_target() as conn_target:
             with conn_target.cursor() as cursor_target:
@@ -368,7 +364,7 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                 cursor_target.executemany(
                     f"""
                     WITH _ AS (
-                        SELECT {hash_expression} AS HASH_KEY
+                        SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')} AS HASH_KEY
                               ,*
                         FROM irb.BOT_CUST_CARR_XWALK
                     )
