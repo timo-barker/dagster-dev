@@ -3,10 +3,10 @@ import dagster as dg
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_target"},
-    auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
-    kinds={"sqlserver"},
     group_name="wps_clnt_grt",
+    kinds={"sqlserver"},
+    name="disable_fks",
+    required_resource_keys={"sql_server_target"},
 )
 def disable_fks(context: dg.AssetExecutionContext):
     with context.resources.sql_server_target() as conn, conn.cursor() as cur:
@@ -16,11 +16,12 @@ def disable_fks(context: dg.AssetExecutionContext):
         conn.commit()
 
 @dg.asset(
-    required_resource_keys={"sql_server_target"},
-    deps=["fmac_pic", "upld"],
     auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
+    deps=["fmac_pic", "upld"],
     group_name="wps_clnt_grt",
     kinds={"sqlserver"},
+    name="enable_fks",
+    required_resource_keys={"sql_server_target"},
 )
 def enable_fks(context: dg.AssetExecutionContext):
     with context.resources.sql_server_target() as conn, conn.cursor() as cur:

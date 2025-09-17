@@ -12,12 +12,13 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
-    partitions_def=daily_partition,
-    name="rpt",
+    backfill_policy=dg.BackfillPolicy.single_run(),
     description="irb.RPT",
-    kinds={"sql"},
     group_name="wps_clnt_grt",
+    kinds={"sql"},
+    name="rpt",
+    partitions_def=daily_partition,
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def rpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """Upserts records between source and target RPT tables."""

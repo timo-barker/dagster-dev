@@ -12,14 +12,15 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
+    automation_condition=dg.AutomationCondition.missing(),
+    backfill_policy=dg.BackfillPolicy.single_run(),
     deps=["snpsht_rvw", "cust", "pic"],
-    partitions_def=daily_partition,
-    name="fmac_pic",
     description="irb.FMAC_PIC",
-    kinds={"sql"},
     group_name="wps_clnt_grt",
-    #hooks= turn on foreign key contraint for pic in pic_automation_dev/defs/hooks.py
+    kinds={"sql"},
+    name="fmac_pic",
+    partitions_def=daily_partition,
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def fmac_pic(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """Upserts records between source and target FMAC_PIC tables."""

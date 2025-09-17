@@ -12,14 +12,15 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
+    automation_condition=dg.AutomationCondition.missing(),
+    backfill_policy=dg.BackfillPolicy.single_run(),
     deps=["pic"],
-    partitions_def=daily_partition,
-    name="upld",
     description="irb.UPLD",
-    kinds={"sql"},
     group_name="wps_clnt_grt",
-    #hooks= turn on foreign key contraint for pic in pic_automation_dev/defs/hooks.py
+    kinds={"sql"},
+    name="upld",
+    partitions_def=daily_partition,
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def upld(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """Upserts records between source and target UPLD tables."""

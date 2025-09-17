@@ -12,12 +12,13 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
-    partitions_def=daily_partition,
-    name="pic_trx_log",
+    backfill_policy=dg.BackfillPolicy.single_run(),
     description="irb.PIC_TRX_LOG",
-    kinds={"sql"},
     group_name="wps_clnt_grt",
+    kinds={"sql"},
+    name="pic_trx_log",
+    partitions_def=daily_partition,
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def pic_trx_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """Upserts records between source and target PIC_TRX_LOG tables."""

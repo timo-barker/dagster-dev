@@ -11,11 +11,11 @@ from .. import constants
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
-    name="fmac_xwalk",
     description="irb.FMAC_XWALK",
-    kinds={"sqlserver"},
     group_name="wps_pic",
+    kinds={"sqlserver"},
+    name="fmac_xwalk",
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """SCD Type 1 merge between source and target FMAC_XWALK tables."""

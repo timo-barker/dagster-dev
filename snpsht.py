@@ -12,12 +12,13 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
-    partitions_def=daily_partition,
-    name="snpsht",
+    backfill_policy=dg.BackfillPolicy.single_run(),
     description="irb.SNPSHT",
-    kinds={"sql"},
     group_name="wps_clnt_grt",
+    kinds={"sql"},
+    name="snpsht",
+    partitions_def=daily_partition,
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def snpsht(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """Upserts records between source and target SNPSHT tables."""

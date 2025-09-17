@@ -11,12 +11,12 @@ from .. import constants
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
     deps=["pic_fl_upld_log"],
-    name="pic_fl_upld_data",
     description="irb.PIC_FL_UPLD_DATA",
-    kinds={"sqlserver"},
     group_name="wps_pic",
+    kinds={"sqlserver"},
+    name="pic_fl_upld_data",
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def pic_fl_upld_data(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """SCD Type 1 merge between source and target PIC_FL_UPLD_DATA tables."""

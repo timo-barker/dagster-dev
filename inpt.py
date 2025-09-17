@@ -12,13 +12,15 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    required_resource_keys={"sql_server_source", "sql_server_target"},
+    automation_condition=dg.AutomationCondition.missing(),
+    backfill_policy=dg.BackfillPolicy.single_run(),
     deps=["prfl"],
-    partitions_def=daily_partition,
-    name="inpt",
     description="irb.INPT",
-    kinds={"sql"},
     group_name="wps_clnt_grt",
+    kinds={"sql"},
+    name="inpt",
+    partitions_def=daily_partition,
+    required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """Upserts records between source and target INPT tables."""
