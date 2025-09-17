@@ -6,7 +6,6 @@ import time
 import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from .. import constants
 from ..partitions import daily_partition
@@ -17,7 +16,7 @@ from ..partitions import daily_partition
     partitions_def=daily_partition,
     name="pic_trx_log",
     description="irb.PIC_TRX_LOG",
-    kinds={"sql", "table"},
+    kinds={"sql"},
     group_name="wps_clnt_grt",
 )
 def pic_trx_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
@@ -26,8 +25,7 @@ def pic_trx_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     def __get_partition_range(partition_key: str | None = None) -> tuple[str, str]:
         """Converts partition key into date range strings."""
         if partition_key:
-            start_date = datetime.strptime(partition_key, constants.DATE_FORMAT)
-            end_date = start_date + relativedelta(days=1)
+            start_date, end_date = context.partition_time_window
             return start_date.strftime(constants.DATE_FORMAT), end_date.strftime(
                 constants.DATE_FORMAT
             )
