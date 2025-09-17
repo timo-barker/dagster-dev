@@ -1,0 +1,30 @@
+# src/pic_automation_dev/defs/ops.py
+import dagster as dg
+
+
+@dg.asset(
+    required_resource_keys={"sql_server_target"},
+    auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
+    kinds={"sqlserver"},
+    group_name="wps_clnt_grt",
+)
+def disable_fks(context: dg.AssetExecutionContext):
+    with context.resources.sql_server_target() as conn, conn.cursor() as cur:
+        context.log.info("Disabling FK__CUST__FMAC_PIC_KEY_MSTR and FK__PIC__UPLD_KEY_MSTR")
+        cur.execute("ALTER TABLE irb.CUST NOCHECK CONSTRAINT FK__CUST__FMAC_PIC_KEY_MSTR")
+        cur.execute("ALTER TABLE irb.PIC NOCHECK CONSTRAINT FK__PIC__UPLD_KEY_MSTR")
+        conn.commit()
+
+@dg.asset(
+    required_resource_keys={"sql_server_target"},
+    deps=["fmac_pic", "upld"],
+    auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
+    group_name="wps_clnt_grt",
+    kinds={"sqlserver"},
+)
+def enable_fks(context: dg.AssetExecutionContext):
+    with context.resources.sql_server_target() as conn, conn.cursor() as cur:
+        context.log.info("Enabling FK__CUST__FMAC_PIC_KEY_MSTR and FK__PIC__UPLD_KEY_MSTR")
+        cur.execute("ALTER TABLE irb.CUST WITH CHECK CHECK CONSTRAINT FK__CUST__FMAC_PIC_KEY_MSTR")
+        cur.execute("ALTER TABLE irb.PIC WITH CHECK CHECK CONSTRAINT FK__PIC__UPLD_KEY_MSTR")
+        conn.commit()
