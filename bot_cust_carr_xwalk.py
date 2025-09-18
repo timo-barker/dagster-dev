@@ -59,11 +59,11 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                       ,ROW_NUMBER() OVER(ORDER BY HASH_KEY)
                 FROM __
             )
-            SELECT ((ROW_NBR-1)/{batch_size}) AS row_nbr
+            SELECT (ROW_NBR/{batch_size}) AS row_nbr
                   ,MIN(HASH_KEY) AS min_key
                   ,MAX(HASH_KEY) AS max_key
             FROM _
-            GROUP BY ((ROW_NBR-1)/{batch_size})
+            GROUP BY (ROW_NBR/{batch_size})
             """
         with sql_server_source() as conn:
             range_df = __fetch_data(conn, range_query)

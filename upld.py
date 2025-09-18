@@ -52,11 +52,11 @@ def upld(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                        AND UPDATED_DTTM <  '{end_date_str}')
                    OR NULLIF('{start_date_str}','') IS NULL
             )
-            SELECT ((ROW_NBR-1)/{batch_size}) AS row_nbr
+            SELECT (ROW_NBR/{batch_size}) AS row_nbr
                   ,MIN(UPLD_KEY) AS min_key
                   ,MAX(UPLD_KEY) AS max_key
             FROM _
-            GROUP BY ((ROW_NBR-1)/{batch_size})
+            GROUP BY (ROW_NBR/{batch_size})
             """
         with sql_server_source() as conn:
             range_df = __fetch_data(conn, range_query)
