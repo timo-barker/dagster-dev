@@ -13,8 +13,8 @@ from .. import constants
 @dg.asset(
     description="irb.FMAC_XWALK",
     group_name="wps_pic",
+    key=dg.AssetKey(["localdb", "fmac_xwalk"]),
     kinds={"sqlserver"},
-    name="fmac_xwalk",
     required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def fmac_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:

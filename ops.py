@@ -4,8 +4,8 @@ import dagster as dg
 
 @dg.asset(
     group_name="wps_clnt_grt",
+    key=dg.AssetKey(["localdb", "disable_fks"]),
     kinds={"sqlserver"},
-    name="disable_fks",
     required_resource_keys={"sql_server_target"},
 )
 def disable_fks(context: dg.AssetExecutionContext):
@@ -19,8 +19,8 @@ def disable_fks(context: dg.AssetExecutionContext):
     auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
     deps=["fmac_pic", "upld"],
     group_name="wps_clnt_grt",
+    key=dg.AssetKey(["localdb", "enable_fks"]),
     kinds={"sqlserver"},
-    name="enable_fks",
     required_resource_keys={"sql_server_target"},
 )
 def enable_fks(context: dg.AssetExecutionContext):

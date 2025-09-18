@@ -13,8 +13,8 @@ from .. import constants
 @dg.asset(
     description="irb.PIC_FL_UPLD_LOG",
     group_name="wps_pic",
+    key=dg.AssetKey(["localdb", "pic_fl_upld_log"]),
     kinds={"sqlserver"},
-    name="pic_fl_upld_log",
     required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def pic_fl_upld_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
@@ -209,7 +209,7 @@ def pic_fl_upld_log(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         return insert_ids, update_ids, delete_ids, ignore_ids
 
     def _num_to_str(df: pl.DataFrame) -> pl.DataFrame:
-        """Helper function to convert numeric columns in a Polars DataFrame to string type."""
+        """Convert numeric columns in a Polars DataFrame to string type."""
         cols = []
         for c in df.columns:
             if df[c].dtype in [

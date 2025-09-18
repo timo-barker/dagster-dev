@@ -17,8 +17,8 @@ from ..partitions import daily_partition
     deps=["snpsht"],
     description="irb.SNPSHT_RVW",
     group_name="wps_clnt_grt",
+    key=dg.AssetKey(["localdb", "snpsht_rvw"]),
     kinds={"sql"},
-    name="snpsht_rvw",
     partitions_def=daily_partition,
     required_resource_keys={"sql_server_source", "sql_server_target"},
 )
@@ -218,7 +218,7 @@ def snpsht_rvw(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         return insert_ids, update_ids, delete_ids, ignore_ids
 
     def _num_to_str(df: pl.DataFrame) -> pl.DataFrame:
-        """Helper function to convert numeric columns in a Polars DataFrame to string type."""
+        """Convert numeric columns in a Polars DataFrame to string type."""
         cols = []
         for c in df.columns:
             if df[c].dtype in [

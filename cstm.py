@@ -17,8 +17,8 @@ from ..partitions import daily_partition
     deps=["prfl"],
     description="irb.CSTM",
     group_name="wps_clnt_grt",
+    key=dg.AssetKey(["localdb", "cstm"]),
     kinds={"sql"},
-    name="cstm",
     partitions_def=daily_partition,
     required_resource_keys={"sql_server_source", "sql_server_target"},
 )
@@ -225,7 +225,7 @@ def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         return insert_ids, update_ids, delete_ids, ignore_ids
 
     def _num_to_str(df: pl.DataFrame) -> pl.DataFrame:
-        """Helper function to convert numeric columns in a Polars DataFrame to string type."""
+        """Convert numeric columns in a Polars DataFrame to string type."""
         cols = []
         for c in df.columns:
             if df[c].dtype in [

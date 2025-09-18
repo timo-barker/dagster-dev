@@ -13,8 +13,8 @@ from .. import constants
 @dg.asset(
     description="irb.BOT_CUST_CARR_XWALK",
     group_name="wps_ref",
+    key=dg.AssetKey(["localdb", "bot_cust_carr_xwalk"]),
     kinds={"sqlserver"},
-    name="bot_cust_carr_xwalk",
     required_resource_keys={"sql_server_source", "sql_server_target"},
 )
 def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:

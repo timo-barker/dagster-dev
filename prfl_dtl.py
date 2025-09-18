@@ -17,8 +17,8 @@ from ..partitions import daily_partition
     deps=["prfl", "rpt_rvw", "fmac_pic"],
     description="irb.PRFL_DTL",
     group_name="wps_clnt_grt",
+    key=dg.AssetKey(["localdb", "prfl_dtl"]),
     kinds={"sql"},
-    name="prfl_dtl",
     partitions_def=daily_partition,
     required_resource_keys={"sql_server_source", "sql_server_target"},
 )
@@ -222,7 +222,7 @@ def prfl_dtl(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         return insert_ids, update_ids, delete_ids, ignore_ids
 
     def _num_to_str(df: pl.DataFrame) -> pl.DataFrame:
-        """Helper function to convert numeric columns in a Polars DataFrame to string type."""
+        """Convert numeric columns in a Polars DataFrame to string type."""
         cols = []
         for c in df.columns:
             if df[c].dtype in [
