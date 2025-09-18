@@ -198,7 +198,7 @@ def rpt_rvw_line(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
             )
 
             diff_condition = (
-                __values_differ("RPT_KEY", "RPT_KEY_target")
+                __values_differ("RVW_KEY", "RVW_KEY_target")
                 | __values_differ("FLD_KEY", "FLD_KEY_target")
                 | __values_differ("FLD_VL", "FLD_VL_target")
                 | __values_differ("FLD_VL_PREV", "FLD_VL_PREV_target")

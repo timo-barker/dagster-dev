@@ -1,8 +1,16 @@
 # src/pic_automation_dev/defs/ops.py
 import dagster as dg
+from datetime import timedelta
+from dagster.preview.freshness import FreshnessPolicy
 
 
 @dg.asset(
+    auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
+    freshness_policy=FreshnessPolicy.cron(
+        deadline_cron="0 0 * * *",
+        lower_bound_delta=timedelta(minutes=1),
+        timezone="America/New_York",
+    ),
     group_name="wps_clnt_grt",
     key=dg.AssetKey(["localdb", "disable_fks"]),
     kinds={"sqlserver"},

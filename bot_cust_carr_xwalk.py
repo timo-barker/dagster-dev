@@ -5,13 +5,19 @@ import socket
 import time
 import tomllib
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from dagster.preview.freshness import FreshnessPolicy
+from datetime import datetime, timedelta
 from pathlib import Path
 from .. import constants
 
 
 @dg.asset(
+    auto_materialize_policy=dg.AutoMaterializePolicy.eager(),
     description="irb.BOT_CUST_CARR_XWALK",
+    freshness_policy=FreshnessPolicy.time_window(
+        fail_window=timedelta(hours=24), 
+        warn_window=timedelta(minutes=1)
+    ),
     group_name="wps_ref",
     key=dg.AssetKey(["localdb", "bot_cust_carr_xwalk"]),
     kinds={"sqlserver"},

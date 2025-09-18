@@ -149,8 +149,8 @@ def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         query = f"""
             SELECT CSTM_KEY
                   ,PRFL_KEY
-                  ,RPT_STRT_DT
-                  ,RPT_END_DT
+                  ,RPRT_STRT_DT
+                  ,RPRT_END_DT
                   ,SUBGRP
                   ,ONS_NABP
                   ,SRX_LIST
@@ -199,8 +199,8 @@ def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
 
             diff_condition = (
                 __values_differ("PRFL_KEY", "PRFL_KEY_target")
-                | __values_differ("RPT_STRT_DT", "RPT_STRT_DT_target")
-                | __values_differ("RPT_END_DT", "RPT_END_DT_target")
+                | __values_differ("RPRT_STRT_DT", "RPRT_STRT_DT_target")
+                | __values_differ("RPRT_END_DT", "RPRT_END_DT_target")
                 | __values_differ("SUBGRP", "SUBGRP_target")
                 | __values_differ("ONS_NABP", "ONS_NABP_target")
                 | __values_differ("SRX_LIST", "SRX_LIST_target")
@@ -269,8 +269,8 @@ def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                       (
                         CSTM_KEY
                        ,PRFL_KEY
-                       ,RPT_STRT_DT
-                       ,RPT_END_DT
+                       ,RPRT_STRT_DT
+                       ,RPRT_END_DT
                        ,SUBGRP
                        ,ONS_NABP
                        ,SRX_LIST
@@ -301,8 +301,8 @@ def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
         update_data_df = update_data.select(
             [
                 pl.col("PRFL_KEY"),
-                pl.col("RPT_STRT_DT"),
-                pl.col("RPT_END_DT"),
+                pl.col("RPRT_STRT_DT"),
+                pl.col("RPRT_END_DT"),
                 pl.col("SUBGRP"),
                 pl.col("ONS_NABP"),
                 pl.col("SRX_LIST"),
@@ -328,8 +328,8 @@ def cstm(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                     """
                     UPDATE irb.CSTM
                     SET PRFL_KEY = ?
-                       ,RPT_STRT_DT = ?
-                       ,RPT_END_DT = ?
+                       ,RPRT_STRT_DT = ?
+                       ,RPRT_END_DT = ?
                        ,SUBGRP = ?
                        ,ONS_NABP = ?
                        ,SRX_LIST = ?

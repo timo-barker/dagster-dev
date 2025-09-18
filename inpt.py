@@ -152,6 +152,8 @@ def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                   ,PRFL_KEY
                   ,EXPRT_TYP
                   ,LOCK_DT
+                  ,RPRT_STRT_DT
+                  ,RPRT_END_DT
                   ,SNPSHT_DT
                   ,GRRPS_IND
                   ,STTLMNT_IND
@@ -203,6 +205,8 @@ def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                 | __values_differ("EXPRT_TYP", "EXPRT_TYP_target")
                 | __values_differ("LOCK_DT", "LOCK_DT_target")
                 | __values_differ("SNPSHT_DT", "SNPSHT_DT_target")
+                | __values_differ("RPRT_STRT_DT", "RPRT_STRT_DT_target")
+                | __values_differ("RPRT_END_DT", "RPRT_END_DT_target")
                 | __values_differ("GRRPS_IND", "GRRPS_IND_target")
                 | __values_differ("STTLMNT_IND", "STTLMNT_IND_target")
                 | __values_differ("INPT_STTS", "INPT_STTS_target")
@@ -273,6 +277,8 @@ def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                        ,EXPRT_TYP
                        ,LOCK_DT
                        ,SNPSHT_DT
+                       ,RPRT_STRT_DT
+                       ,RPRT_END_DT
                        ,GRRPS_IND
                        ,STTLMNT_IND
                        ,INPT_STTS
@@ -282,7 +288,7 @@ def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                        ,UPDATED_BY
                        ,UPDATED_DTTM
                       )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     insert_data_ls,
                 )
@@ -304,6 +310,8 @@ def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                 pl.col("PRFL_KEY"),
                 pl.col("EXPRT_TYP"),
                 pl.col("LOCK_DT"),
+                pl.col("RPRT_STRT_DT"),
+                pl.col("RPRT_END_DT"),
                 pl.col("SNPSHT_DT"),
                 pl.col("GRRPS_IND"),
                 pl.col("STTLMNT_IND"),
@@ -331,6 +339,8 @@ def inpt(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
                     SET PRFL_KEY = ?
                        ,EXPRT_TYP = ?
                        ,LOCK_DT = ?
+                       ,RPRT_STRT_DT = ?
+                       ,RPRT_END_DT = ?
                        ,SNPSHT_DT = ?
                        ,GRRPS_IND = ?
                        ,STTLMNT_IND = ?
