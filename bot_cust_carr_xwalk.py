@@ -38,9 +38,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
     ) -> pl.DataFrame:
         """Gets HASH_KEY ranges from source table divided into batches."""
         start_date_str, end_date_str = __get_partition_range(partition_key)
+        hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
         range_query = f"""
-            WITH __ (HASH_KEY) AS (
-                SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')}
+            WITH __ AS (
+                SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
                 FROM irb.BOT_CUST_CARR_XWALK
                 WHERE (    UPDATED_DTTM >= '{start_date_str}'
                        AND UPDATED_DTTM <  '{end_date_str}')
@@ -143,12 +144,13 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
         )
 
         return extended
-    
+
     def _select_batch_data(sql_server, min_key: int, max_key: int) -> pl.DataFrame:
         """Fetch data from BOT_CUST_CARR_XWALK for a given HASH_KEY range [min_key, max_key]."""
+        hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
         query = f"""
             WITH _ AS (
-                SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')} AS HASH_KEY
+                SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
                       ,*
                 FROM irb.BOT_CUST_CARR_XWALK
             )
@@ -274,7 +276,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
 
         with sql_server_target() as conn_target:
             with conn_target.cursor() as cursor_target:
-                cursor_target.execute("ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL")
+                cursor_target.execute(
+                    "ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL"
+                )
                 cursor_target.fast_executemany = True
                 cursor_target.executemany(
                     """
@@ -296,7 +300,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                     """,
                     insert_data_ls,
                 )
-                cursor_target.execute("ALTER TABLE irb.BOT_CUST_CARR_XWALK ENABLE TRIGGER ALL")
+                cursor_target.execute(
+                    "ALTER TABLE irb.BOT_CUST_CARR_XWALK ENABLE TRIGGER ALL"
+                )
                 conn_target.commit()
 
         return len(insert_ids)
@@ -326,11 +332,14 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
 
         with sql_server_target() as conn_target:
             with conn_target.cursor() as cursor_target:
-                cursor_target.execute("ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL")
+                cursor_target.execute(
+                    "ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL"
+                )
+                hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
                 cursor_target.executemany(
                     f"""
                     WITH _ AS (
-                        SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')} AS HASH_KEY
+                        SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
                               ,*
                         FROM irb.BOT_CUST_CARR_XWALK
                     )
@@ -350,7 +359,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                     """,
                     update_data_ls,
                 )
-                cursor_target.execute("ALTER TABLE irb.BOT_CUST_CARR_XWALK ENABLE TRIGGER ALL")
+                cursor_target.execute(
+                    "ALTER TABLE irb.BOT_CUST_CARR_XWALK ENABLE TRIGGER ALL"
+                )
                 conn_target.commit()
 
         return len(update_ids)
@@ -360,11 +371,14 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
         delete_data_ls = [(id,) for id in delete_ids]
         with sql_server_target() as conn_target:
             with conn_target.cursor() as cursor_target:
-                cursor_target.execute("ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL")
+                cursor_target.execute(
+                    "ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL"
+                )
+                hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
                 cursor_target.executemany(
                     f"""
                     WITH _ AS (
-                        SELECT {constants.HASH_KEY.format('PHRMCY_CARR_ID', 'CMS_CNTRCT_NBR', 'CUST_ID')} AS HASH_KEY
+                        SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
                               ,*
                         FROM irb.BOT_CUST_CARR_XWALK
                     )
@@ -373,7 +387,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                     """,
                     delete_data_ls,
                 )
-                cursor_target.execute("ALTER TABLE irb.BOT_CUST_CARR_XWALK ENABLE TRIGGER ALL")
+                cursor_target.execute(
+                    "ALTER TABLE irb.BOT_CUST_CARR_XWALK ENABLE TRIGGER ALL"
+                )
                 conn_target.commit()
 
         return len(delete_ids)
@@ -442,11 +458,11 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
 
     # Step 9: report overall status
     batch_count = merged_ranges.height
-    min_key = int(merged_ranges.select("min_key").min().item()) if batch_count > 0 else 0
-    max_key = int(merged_ranges.select("max_key").max().item()) if batch_count > 0 else 0
+    min_key = (int(merged_ranges.select("min_key").min().item()) if batch_count > 0 else 0)
+    max_key = (int(merged_ranges.select("max_key").max().item()) if batch_count > 0 else 0)
     row_count = inserts + updates + deletes + ignores
     user_name, host_name = getpass.getuser(), socket.gethostname()
-    project_version = tomllib.load(Path('pyproject.toml').open('rb'))['project']['version']
+    project_version = tomllib.load(Path("pyproject.toml").open("rb"))["project"]["version"]
     end_datetime, end_time = str(datetime.now().astimezone()), time.time()
     seconds = round(end_time - start_time, 3)
     records_per_second = int(round(row_count / seconds if seconds > 0 else 0, 0))
