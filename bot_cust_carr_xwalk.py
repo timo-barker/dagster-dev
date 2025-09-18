@@ -19,6 +19,8 @@ from .. import constants
 )
 def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResult:
     """SCD Type 1 merge between source and target BOT_CUST_CARR_XWALK tables."""
+    hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
+    hash_expression = constants.HASH_KEY.format(*hash_columns)
 
     def __get_partition_range(partition_key: str | None = None) -> tuple[str, str]:
         """Converts partition key into date range strings."""
@@ -38,10 +40,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
     ) -> pl.DataFrame:
         """Gets HASH_KEY ranges from source table divided into batches."""
         start_date_str, end_date_str = __get_partition_range(partition_key)
-        hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
         range_query = f"""
             WITH __ AS (
-                SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
+                SELECT {hash_expression} AS HASH_KEY
                 FROM irb.BOT_CUST_CARR_XWALK
                 WHERE (    UPDATED_DTTM >= '{start_date_str}'
                        AND UPDATED_DTTM <  '{end_date_str}')
@@ -147,10 +148,9 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
 
     def _select_batch_data(sql_server, min_key: int, max_key: int) -> pl.DataFrame:
         """Fetch data from BOT_CUST_CARR_XWALK for a given HASH_KEY range [min_key, max_key]."""
-        hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
         query = f"""
             WITH _ AS (
-                SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
+                SELECT {hash_expression} AS HASH_KEY
                       ,*
                 FROM irb.BOT_CUST_CARR_XWALK
             )
@@ -335,11 +335,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                 cursor_target.execute(
                     "ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL"
                 )
-                hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
                 cursor_target.executemany(
                     f"""
                     WITH _ AS (
-                        SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
+                        SELECT {hash_expression} AS HASH_KEY
                               ,*
                         FROM irb.BOT_CUST_CARR_XWALK
                     )
@@ -374,11 +373,10 @@ def bot_cust_carr_xwalk(context: dg.AssetExecutionContext) -> dg.MaterializeResu
                 cursor_target.execute(
                     "ALTER TABLE irb.BOT_CUST_CARR_XWALK DISABLE TRIGGER ALL"
                 )
-                hash_columns = ["PHRMCY_CARR_ID", "CMS_CNTRCT_NBR", "CUST_ID"]
                 cursor_target.executemany(
                     f"""
                     WITH _ AS (
-                        SELECT {constants.HASH_KEY.format(*hash_columns)} AS HASH_KEY
+                        SELECT {hash_expression} AS HASH_KEY
                               ,*
                         FROM irb.BOT_CUST_CARR_XWALK
                     )
