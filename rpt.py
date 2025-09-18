@@ -12,6 +12,7 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
+    automation_condition=dg.AutomationCondition.missing(),
     backfill_policy=dg.BackfillPolicy.single_run(),
     description="irb.RPT",
     group_name="wps_clnt_grt",

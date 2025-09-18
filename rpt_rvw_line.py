@@ -12,7 +12,7 @@ from ..partitions import daily_partition
 
 
 @dg.asset(
-    automation_condition=dg.AutomationCondition.missing(),
+    automation_condition=dg.AutomationCondition.eager(),
     backfill_policy=dg.BackfillPolicy.single_run(),
     deps=["rpt_rvw", "fld"],
     description="irb.RPT_RVW_LINE",
